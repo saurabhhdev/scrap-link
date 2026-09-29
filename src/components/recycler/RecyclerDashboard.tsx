@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { RecyclingBatch } from '../../types';
+import { RecyclerMarketplace } from './RecyclerMarketplace';
 
 export const RecyclerDashboard: React.FC = () => {
   const { 
@@ -27,16 +28,19 @@ export const RecyclerDashboard: React.FC = () => {
 
   const [filterMaterial, setFilterMaterial] = useState<string>('all');
 
-  const incomingPaperKg = 240;
-  const incomingPlasticKg = 180;
-  const incomingMetalKg = 95;
-  const incomingEWasteKg = 45;
+  const batchWeight = (matches: string[]) => batches.filter(batch => matches.some(value => batch.materialType.toLowerCase().includes(value))).reduce((total, batch) => total + batch.totalWeightKg, 0);
+  const incomingPaperKg = batchWeight(['paper', 'pulp', 'cardboard']);
+  const incomingPlasticKg = batchWeight(['plastic', 'polymer', 'pet', 'hdpe']);
+  const incomingMetalKg = batchWeight(['metal', 'iron', 'copper', 'aluminium']);
+  const incomingEWasteKg = batchWeight(['e-waste', 'electronic', 'pcb']);
 
   const filteredBatches = filterMaterial === 'all' 
     ? batches 
     : batches.filter(b => b.materialType.toLowerCase().includes(filterMaterial.toLowerCase()));
 
   return (
+    <>
+    <div className="py-8 bg-slate-50"><RecyclerMarketplace /></div>
     <div className="py-8 bg-slate-50 min-h-[calc(100vh-4rem)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         
@@ -82,7 +86,7 @@ export const RecyclerDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900">Incoming Materials Queue</h2>
-              <p className="text-xs text-slate-500">Live aggregate intake from municipal aggregation & sorting hubs</p>
+                <p className="text-xs text-slate-500">Recorded batch weights by material category</p>
             </div>
             <span className="text-xs text-slate-400 font-mono">Today's Batch Manifest</span>
           </div>
@@ -182,6 +186,11 @@ export const RecyclerDashboard: React.FC = () => {
                             {batch.eprCreditCertificateNo}
                           </span>
                         )}
+                        {batch.handoverId && (
+                          <a href={`/verify/${encodeURIComponent(batch.handoverId)}`} target="_blank" rel="noreferrer" className="mt-1 block font-sans text-[10px] font-semibold text-indigo-700 hover:underline">
+                            Public handover · {batch.handoverId}
+                          </a>
+                        )}
                       </td>
 
                       <td className="py-4 px-4 font-semibold text-slate-800">
@@ -228,7 +237,7 @@ export const RecyclerDashboard: React.FC = () => {
                             <span>Received & Weighed</span>
                           </span>
                         )}
-                        {isInbound && (
+                        {isInbound && !batch.directLotId && (
                           <span className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                             <Clock className="w-3.5 h-3.5 text-amber-600" />
                             <span>In-Transit From Hub</span>
@@ -248,7 +257,10 @@ export const RecyclerDashboard: React.FC = () => {
 
                         {isReceived && (
                           <button
-                            onClick={() => processBatchAndIssueEPR(batch.id)}
+                            onClick={() => {
+                              const reference = window.prompt('Enter the external recycling certificate or processing reference:');
+                              if (reference?.trim()) void processBatchAndIssueEPR(batch.id, reference.trim());
+                            }}
                             className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition-colors cursor-pointer flex items-center space-x-1 inline-flex"
                           >
                             <Sparkles className="w-3.5 h-3.5" />
@@ -276,6 +288,6 @@ export const RecyclerDashboard: React.FC = () => {
 
       </div>
     </div>
+    </>
   );
 };
-

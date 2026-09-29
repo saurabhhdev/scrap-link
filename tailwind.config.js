@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         brand: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#052e16',
+          50: '#f1f6f0',
+          100: '#e0ebe0',
+          200: '#c7d9ca',
+          300: '#a6c3ad',
+          400: '#7fa58c',
+          500: '#5d886e',
+          600: '#47755e',
+          700: '#315f4f',
+          800: '#254b40',
+          900: '#173d35',
+          950: '#0b2823',
         },
         slate: {
           850: '#151f32',
@@ -26,7 +26,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
       },
       boxShadow: {

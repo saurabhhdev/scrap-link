@@ -15,7 +15,13 @@ export const HeroSection: React.FC = () => {
     <section className="border-b border-[#dfe5dc] bg-[#f7f7f2] py-16 sm:py-24">
       <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
         <div className="max-w-2xl">
-          <p className="mb-5 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#5b7c67]"><span className="h-1.5 w-1.5 bg-[#d77a4b]" />Household scrap, properly connected</p>
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#c9ddc9] bg-[#edf5e9] px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#365a4e] shadow-[0_0_24px_rgba(107,166,105,0.18)] sm:text-xs">
+            <span className="relative flex h-2 w-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#73a96e] opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-[#4e8a56] shadow-[0_0_10px_rgba(78,138,86,0.75)]" />
+            </span>
+            <span className="live-glow-copy">Household scrap, properly connected</span>
+          </p>
           <h1 className="text-4xl font-semibold tracking-[-0.045em] text-[#173d35] sm:text-5xl lg:text-6xl">A clearer way to recycle your scrap.</h1>
           <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg">Book a doorstep pickup, receive a digital collection record, and follow your material through the recycling journey.</p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">

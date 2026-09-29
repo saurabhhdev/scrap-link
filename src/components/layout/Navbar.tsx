@@ -6,22 +6,22 @@ import {
   Truck, 
   Building2, 
   ShieldCheck, 
-  ChevronDown, 
   X,
   LogOut,
 } from 'lucide-react';
 import { useApp, AppTab } from '../../context/AppContext';
 import { UserRole } from '../../types';
 import { ScrapLinkLogo } from '../ui/ScrapLinkLogo';
+import { Language, useI18n } from '../../i18n/I18nContext';
 
 interface NavbarProps {
   onOpenAuth: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
+  const { language, setLanguage, t } = useI18n();
   const { 
     role, 
-    setRole, 
     currentUser,
     logout,
     activeTab, 
@@ -31,7 +31,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   } = useApp();
 
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const [activeAnchor, setActiveAnchor] = useState('');
   const [quickSearchInput, setQuickSearchInput] = useState('');
 
   const handleQuickSearch = (event: React.FormEvent) => {
@@ -43,38 +43,37 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   };
 
   // Dynamically compute navigation links based on active role
-  const getNavLinks = (): { id: AppTab; label: string }[] => {
+  const getNavLinks = (): { id: AppTab; label: string; anchor?: string }[] => {
     if (role === 'household') {
       return [
-        { id: 'customer', label: 'My Dashboard' },
         { id: 'schedule', label: 'Book Pickup' },
         { id: 'rates', label: 'Rates' },
         { id: 'trace', label: 'Track' },
-        { id: 'landing', label: 'Home' }
       ];
     }
     if (role === 'collector') {
       return [
-        { id: 'collector', label: 'Pickup Queue' },
-        { id: 'identity', label: 'Identity' },
-        { id: 'rates', label: 'Rates' },
-        { id: 'trace', label: 'Track' },
-        { id: 'landing', label: 'Home' }
+        { id: 'collector', label: 'Dashboard' },
+        { id: 'create-lot', label: 'Create Lot' },
+        { id: 'my-lots', label: 'My Lots' },
+        { id: 'offers', label: 'Offers' },
+        { id: 'identity', label: 'Profile' }
       ];
     }
     if (role === 'admin') {
       return [
-        { id: 'admin', label: 'Overview' },
-        { id: 'impact', label: 'Impact' },
-        { id: 'trace', label: 'Track' },
-        { id: 'landing', label: 'Home' }
+        { id: 'admin', label: 'Dashboard' },
+        { id: 'admin', label: 'Users', anchor: 'admin-users' },
+        { id: 'admin', label: 'Requests & Lots', anchor: 'admin-requests' },
+        { id: 'admin', label: 'Analytics', anchor: 'admin-analytics' }
       ];
     }
     if (role === 'recycler') {
       return [
-        { id: 'recycler', label: 'Batches' },
-        { id: 'trace', label: 'Track' },
-        { id: 'landing', label: 'Home' }
+        { id: 'recycler', label: 'Dashboard' },
+        { id: 'marketplace', label: 'Marketplace', anchor: 'available-lots' },
+        { id: 'marketplace', label: 'My Offers', anchor: 'my-offers' },
+        { id: 'recycler', label: 'Transactions' },
       ];
     }
     return [
@@ -87,6 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
   };
 
   const navLinks = getNavLinks();
+  const navTranslation: Record<string, string> = { 'My Dashboard': 'navDashboard', 'Book Pickup': 'navBook', Rates: 'navRates', 'Price Board': 'navPrices', Track: 'navTrack', Home: 'navHome', Identity: 'navIdentity', 'Pickup Queue': 'navQueue', Overview: 'navOverview', Impact: 'navImpact', Batches: 'navBatches' };
 
   const roleMeta: Record<UserRole, { label: string; icon: React.ReactNode; badgeColor: string }> = {
     household: {
@@ -115,34 +115,39 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
     <header className="sticky top-0 z-40 border-b border-[#dfe5dc] bg-[#f7f7f2]/95 backdrop-blur-md">
       {/* Main Navbar */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-14 items-center justify-between sm:h-16">
           
           {/* Logo & Primary Nav */}
-          <div className="flex items-center space-x-6">
+          <div className="flex min-w-0 items-center space-x-4">
             <button
               type="button"
               onClick={() => setActiveTab(currentUser ? (currentUser.role === 'household' ? 'customer' : currentUser.role) : 'landing')}
-              className="group flex cursor-pointer items-center space-x-2 text-left focus:outline-hidden"
+              className="group flex shrink-0 cursor-pointer items-center space-x-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
             >
               <ScrapLinkLogo />
             </button>
 
             {/* Role-Specific Navigation Links */}
-            <nav className="hidden items-center space-x-1 lg:flex">
+            <nav aria-label="Main navigation" className="hidden min-w-0 items-center gap-1 lg:flex">
               {navLinks.map((link) => {
-                const isActive = activeTab === link.id;
+                const isActive = link.anchor ? activeAnchor === link.anchor : activeTab === link.id && !activeAnchor;
                 return (
                   <button
-                    key={link.id}
+                    key={`${link.id}-${link.label}`}
                     type="button"
-                    onClick={() => setActiveTab(link.id)}
-                    className={`cursor-pointer rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    data-active={isActive}
+                    onClick={() => {
+                      setActiveTab(link.id);
+                      setActiveAnchor(link.anchor || '');
+                      if (link.anchor) window.setTimeout(() => document.getElementById(link.anchor!)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+                    }}
+                    className={`cursor-pointer whitespace-nowrap rounded-xl px-3 py-2 text-[13px] font-bold tracking-[-0.01em] transition-all duration-200 ${role === 'household' ? 'navbar-link-glow' : ''} ${
                       isActive
-                        ? 'bg-slate-100 text-slate-900'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        ? 'bg-[#e8f0e7] text-[#173d35] shadow-sm ring-1 ring-inset ring-[#cdddc9]'
+                        : 'text-slate-600 hover:bg-white hover:text-[#173d35] hover:shadow-sm'
                     }`}
                   >
-                    {link.label}
+                    {t(navTranslation[link.label] || link.label)}
                   </button>
                 );
               })}
@@ -150,10 +155,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
           </div>
 
           {/* Right Action Group */}
-          <div className="flex items-center space-x-2.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <label className="sr-only" htmlFor="language-picker">{t('language')}</label>
+            <select id="language-picker" value={language} onChange={(event) => setLanguage(event.target.value as Language)} aria-label={t('language')} className="h-10 rounded-lg border border-slate-200 bg-white px-1.5 text-xs font-bold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 sm:px-2">
+              <option value="en">EN</option><option value="hi">हिंदी</option><option value="mr">मराठी</option>
+            </select>
             
             {/* Quick Waste ID Search */}
-            <form onSubmit={handleQuickSearch} className="relative hidden items-center md:flex">
+            <form onSubmit={handleQuickSearch} className="relative hidden items-center xl:flex">
               <input
                 type="text"
                 placeholder="Collection ID"
@@ -165,12 +174,13 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
             </form>
 
             {/* Notifications */}
-            <div className="relative">
+            <div className="relative hidden lg:block">
               <button
                 type="button"
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative cursor-pointer rounded-xl p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                className="relative flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                 aria-label="Notifications"
+                aria-expanded={showNotifications}
               >
                 <Bell className="h-4 w-4" />
                 {notifications.length > 0 && (
@@ -214,82 +224,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenAuth }) => {
               )}
             </div>
 
-            {/* Active Portal Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowRoleDropdown((current) => !current)}
-                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors ${roleMeta[role].badgeColor}`}
-              >
-                {roleMeta[role].icon}
-                <span className="hidden sm:inline">
-                  {currentUser ? currentUser.name.split(' ')[0] : roleMeta[role].label}
-                </span>
-                <ChevronDown className="h-3 w-3 opacity-60" />
-              </button>
-
-              {showRoleDropdown && (
-                <div className="absolute right-0 z-50 mt-2 w-60 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
-                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Switch Active Portal:
-                  </div>
-                  {(['household', 'collector', 'admin', 'recycler'] as UserRole[]).map((roleOption) => (
-                    <button
-                      key={roleOption}
-                      type="button"
-                      onClick={() => {
-                        setRole(roleOption);
-                        setShowRoleDropdown(false);
-                      }}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-xs transition-colors cursor-pointer ${
-                        role === roleOption ? 'bg-slate-100 text-slate-900 font-semibold' : 'text-slate-600 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span className="flex items-center gap-2">
-                        {roleMeta[roleOption].icon}
-                        <span>{roleMeta[roleOption].label}</span>
-                      </span>
-                      {role === roleOption && (
-                        <span className="text-[10px] text-emerald-700 font-mono">Active</span>
-                      )}
-                    </button>
-                  ))}
-
-                  {currentUser && (
-                    <div className="mt-2 pt-2 border-t border-slate-100">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          logout();
-                          setShowRoleDropdown(false);
-                        }}
-                        className="flex w-full items-center space-x-2 rounded-xl px-3 py-2 text-xs text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer font-medium"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        <span>Sign Out of Portal</span>
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
+            {currentUser && (
+              <div aria-label={`${roleMeta[role].label} account${currentUser.isDemo ? ', demo mode' : ''}`} className={`inline-flex h-10 items-center gap-1.5 rounded-xl border px-2 text-xs font-semibold sm:px-3 ${roleMeta[role].badgeColor}`}>
+                {roleMeta[role].icon}<span className="hidden sm:inline">{currentUser.name.split(' ')[0]}</span>{currentUser.isDemo && <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[9px] font-black tracking-wide text-amber-900">DEMO</span>}
+              </div>
+            )}
 
             {/* Portal Login / Switch Button */}
             {currentUser ? (
               <button
                 type="button"
                 onClick={logout}
-                className="hidden sm:inline-flex items-center space-x-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 cursor-pointer"
+                aria-label="Sign out"
+                className="inline-flex h-10 min-w-10 shrink-0 items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 cursor-pointer sm:px-3"
                 title="Sign out"
               >
                 <LogOut className="w-3 h-3 text-slate-500" />
-                <span>Sign Out</span>
+                <span className="hidden md:inline">Sign out</span>
               </button>
             ) : (
               <button
                 type="button"
                 onClick={onOpenAuth}
-                className="rounded-lg bg-[#173d35] px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#285247] cursor-pointer"
+                className="h-10 rounded-lg bg-[#173d35] px-2.5 text-xs font-semibold text-white transition-colors hover:bg-[#285247] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 cursor-pointer sm:px-4"
               >
                 Sign in
               </button>

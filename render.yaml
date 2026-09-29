@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: scraplink-api
+    runtime: node
+    buildCommand: npm ci
+    startCommand: npm run server
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8787"
+      - key: MONGO_URI
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_PHONE
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_TTL_MINUTES
+        value: "480"

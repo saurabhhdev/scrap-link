@@ -23,7 +23,7 @@ export const DigitalIdentityCard: React.FC = () => {
   const [showCertificateModal, setShowCertificateModal] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const verificationUrl = `https://scraplink.app/verify/collector/${activeCollector.id}`;
+  const verificationUrl = `${window.location.origin}/?collector=${encodeURIComponent(activeCollector.id)}`;
 
   const handleShare = () => {
     navigator.clipboard?.writeText(verificationUrl);
@@ -46,14 +46,14 @@ export const DigitalIdentityCard: React.FC = () => {
           </button>
 
           <span className="text-xs font-mono text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
-            e-Pehchan ID Verified
+            {activeCollector.isVerified ? 'Account verified' : 'Verification pending'}
           </span>
         </div>
 
         {/* Dignity Header Message */}
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-200">
-            National Registry of Formalized Environmental Workers
+            ScrapLink collector account
           </span>
           <h1 className="text-3xl font-extrabold text-slate-900">
             Digital Collector Identity & Credentials
@@ -97,9 +97,9 @@ export const DigitalIdentityCard: React.FC = () => {
                   alt={activeCollector.name} 
                   className="w-20 h-20 rounded-2xl object-cover border-2 border-emerald-400 shadow-md"
                 />
-                <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-slate-950 p-0.5 rounded-full" title="Verified Badge">
+                {activeCollector.isVerified && <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-slate-950 p-0.5 rounded-full" title="Account verified">
                   <CheckCircle2 className="w-4 h-4" />
-                </span>
+                </span>}
               </div>
 
               <div className="space-y-1">
@@ -126,11 +126,11 @@ export const DigitalIdentityCard: React.FC = () => {
               </div>
               <div className="flex justify-between items-center text-slate-400">
                 <span>Ayushman Bharat:</span>
-                <span className="text-emerald-400 font-bold">{activeCollector.ayushmanCardNo}</span>
+                <span className="text-emerald-400 font-bold">{activeCollector.ayushmanCardNo || 'Not provided'}</span>
               </div>
               <div className="flex justify-between items-center text-slate-400">
                 <span>CPCB Skill Cert:</span>
-                <span className="text-teal-300 font-bold">{activeCollector.cpcbTrainingCert}</span>
+                <span className="text-teal-300 font-bold">{activeCollector.cpcbTrainingCert || 'Not provided'}</span>
               </div>
               <div className="flex justify-between items-center text-slate-400">
                 <span>Vehicle Fleet:</span>
@@ -144,11 +144,12 @@ export const DigitalIdentityCard: React.FC = () => {
                 Accepted Materials:
               </span>
               <div className="flex flex-wrap gap-1.5 text-[11px]">
-                {['Paper ✓', 'Plastic ✓', 'Metal ✓', 'Cardboard ✓', 'E-Waste ✓'].map((m, i) => (
-                  <span key={i} className="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-medium">
+                {activeCollector.acceptedMaterials.map((m) => (
+                  <span key={m} className="px-2 py-0.5 rounded-md bg-emerald-950/80 text-emerald-300 border border-emerald-800/80 font-medium">
                     {m}
                   </span>
                 ))}
+                {activeCollector.acceptedMaterials.length === 0 && <span className="text-slate-400">No materials configured</span>}
               </div>
             </div>
 
@@ -157,7 +158,7 @@ export const DigitalIdentityCard: React.FC = () => {
               <div>
                 <span className="text-[10px] text-slate-400 uppercase block">Total Waste Diverted</span>
                 <span className="text-lg font-black text-emerald-400">{activeCollector.totalWasteKg.toLocaleString('en-IN')} kg</span>
-                <span className="text-[10px] text-slate-400 block">Verified on CPCB ledger</span>
+                <span className="text-[10px] text-slate-400 block">Recorded collections</span>
               </div>
 
               {/* Dynamic QR Code for On-Street Inspection */}
@@ -229,13 +230,13 @@ export const DigitalIdentityCard: React.FC = () => {
                 </div>
 
                 <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-                  Has successfully diverted <strong>{activeCollector.totalWasteKg.toLocaleString('en-IN')} kg</strong> of recyclable scrap, adhered to fair-weighing protocols, and operates under authorized municipal Extended Producer Responsibility (EPR) recovery channels.
+                  This account has recorded <strong>{activeCollector.totalWasteKg.toLocaleString('en-IN')} kg</strong> of collected material. Verification and credentials reflect information recorded in ScrapLink.
                 </p>
 
                 <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
                   <div>
-                    <span className="block font-bold text-slate-800">Swachh Bharat Urban 2.0</span>
-                    <span className="text-[10px]">Ministry of Housing & Urban Affairs</span>
+                    <span className="block font-bold text-slate-800">ScrapLink</span>
+                    <span className="text-[10px]">Collector identity record</span>
                   </div>
 
                   <div className="w-16 h-16 bg-white p-1 rounded border border-slate-200">
@@ -243,8 +244,8 @@ export const DigitalIdentityCard: React.FC = () => {
                   </div>
 
                   <div>
-                    <span className="block font-bold text-slate-800">Dr. Rajesh Verma</span>
-                    <span className="text-[10px]">Municipal Commissioner (NDMC)</span>
+                    <span className="block font-bold text-slate-800">{activeCollector.isVerified ? 'Verified account' : 'Pending verification'}</span>
+                    <span className="text-[10px]">Status from platform records</span>
                   </div>
                 </div>
 

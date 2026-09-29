@@ -1,0 +1,22 @@
+import cors from 'cors';
+import express from 'express';
+import { env } from './config/env.js';
+import { errorHandler, notFound } from './middleware/errorHandler.js';
+import { authRouter } from './routes/authRoutes.js';
+import { healthRouter } from './routes/healthRoutes.js';
+import { pickupRouter } from './routes/pickupRoutes.js';
+import { lotRouter } from './routes/lotRoutes.js';
+import { offerRouter } from './routes/offerRoutes.js';
+
+export const app = express();
+app.disable('x-powered-by');
+app.use(cors({ origin: env.clientOrigin.split(','), credentials: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use('/uploads', express.static('uploads'));
+app.use('/api/health', healthRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/pickups', pickupRouter);
+app.use('/api/lots', lotRouter);
+app.use('/api/offers', offerRouter);
+app.use(notFound);
+app.use(errorHandler);

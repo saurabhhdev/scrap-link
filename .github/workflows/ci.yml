@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -23,5 +26,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Lint project
+        run: npm run lint
+
       - name: Build project
         run: npm run build
+
+      - name: Check API and data script syntax
+        run: |
+          node --check server/index.mjs
+          node --check server/scripts/seedSampleData.mjs
+          node --check server/scripts/clearSampleActivity.mjs

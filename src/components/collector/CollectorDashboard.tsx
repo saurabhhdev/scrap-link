@@ -23,11 +23,20 @@ import {
 import { useApp } from '../../context/AppContext';
 import { PickupRequest } from '../../types';
 import { CollectModal } from './CollectModal';
+import { RecyclerOfferInbox } from './RecyclerOfferInbox';
+import { RecyclerMatches } from './RecyclerMatches';
+import { CollectorEarningsLedger } from './CollectorEarningsLedger';
+import { CollectorOfflinePanel } from './CollectorOfflinePanel';
+import { SafetyGuide } from './SafetyGuide';
+import { CollectorLotCreator } from './CollectorLotCreator';
+import { useI18n } from '../../i18n/I18nContext';
 
 export const CollectorDashboard: React.FC = () => {
+  const { t } = useI18n();
   const { 
     activeCollector, 
     pickups, 
+    batches,
     acceptPickup, 
     rejectPickup, 
     setActiveTab, 
@@ -41,10 +50,12 @@ export const CollectorDashboard: React.FC = () => {
   const pendingRequests = pickups.filter(p => p.status === 'requested');
   const inTransitPickups = pickups.filter(p => p.status === 'in_transit');
   const completedPickups = pickups.filter(p => p.status === 'collected' || p.status === 'at_sorting' || p.status === 'recycled');
+  const selectedRouteBatch = selectedRoutePickup?.recyclingBatchId ? batches.find((batch) => batch.id === selectedRoutePickup.recyclingBatchId) : undefined;
 
   return (
     <div className="py-8 bg-slate-50 min-h-[calc(100vh-4rem)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        <CollectorOfflinePanel />
         
         {/* Top Header & Dignity Status Banner */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -61,7 +72,7 @@ export const CollectorDashboard: React.FC = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-2xl font-black text-slate-900">
-                  Welcome, {activeCollector.name.split(' ')[0]} 👋
+                  {t('collector')}, {activeCollector.name.split(' ')[0]} 👋
                 </h1>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
                   Verified Collector ✓
@@ -98,37 +109,44 @@ export const CollectorDashboard: React.FC = () => {
         {/* 4 Statistics KPIs Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <span className="text-xs font-medium text-slate-500 block">Today's Pickups</span>
+            <span className="text-base font-bold text-slate-700 block">{t('todayPickups')}</span>
             <div className="text-2xl font-black text-slate-900 mt-1">
               {activeCollector.todayPickups}
             </div>
-            <span className="text-[11px] text-emerald-600 font-medium">On track for daily goal</span>
+            <span className="text-sm text-emerald-700 font-semibold">{t('dailyGoal')}</span>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <span className="text-xs font-medium text-slate-500 block">Today's Earnings</span>
+            <span className="text-base font-bold text-slate-700 block">{t('todayEarnings')}</span>
             <div className="text-2xl font-black text-emerald-600 mt-1 font-mono">
               ₹{activeCollector.todayEarnings.toLocaleString('en-IN')}
             </div>
-            <span className="text-[11px] text-slate-500">Direct to Jan-Dhan Bank</span>
+            <span className="text-sm text-slate-600">{t('paymentRecorded')}</span>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <span className="text-xs font-medium text-slate-500 block">Pending Requests</span>
+            <span className="text-base font-bold text-slate-700 block">{t('pendingPickups')}</span>
             <div className="text-2xl font-black text-amber-500 mt-1">
               {pendingRequests.length}
             </div>
-            <span className="text-[11px] text-amber-700 font-medium">Nearby within 2.5 km</span>
+            <span className="text-sm text-amber-800 font-semibold">{t('nearby')}</span>
           </div>
 
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs">
-            <span className="text-xs font-medium text-slate-500 block">Completed Pickups</span>
+            <span className="text-base font-bold text-slate-700 block">{t('completedPickups')}</span>
             <div className="text-2xl font-black text-teal-600 mt-1">
               {activeCollector.completedPickupsCount}
             </div>
-            <span className="text-[11px] text-teal-700 font-medium">100% Weighed & Recycled</span>
+            <span className="text-sm text-teal-800 font-semibold">{t('weighed')}</span>
           </div>
         </div>
+
+        <SafetyGuide />
+
+        <CollectorEarningsLedger />
+
+        <RecyclerOfferInbox />
+        <CollectorLotCreator />
 
         {/* Main Content Area: Requests Grid & Interactive Map Section */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -141,7 +159,7 @@ export const CollectorDashboard: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center space-x-2 text-xs font-bold uppercase tracking-wider text-brand-700">
                   <Radio className="w-3.5 h-3.5 text-brand-600 animate-pulse" />
-                  <span>Active Pickup in Progress</span>
+                  <span>{t('activePickup')}</span>
                 </div>
 
                 {inTransitPickups.map((p) => (
@@ -183,7 +201,7 @@ export const CollectorDashboard: React.FC = () => {
                         className="flex-1 py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-md transition-colors cursor-pointer flex items-center justify-center space-x-2"
                       >
                         <Scale className="w-4 h-4" />
-                        <span>Record Weight & Disburse UPI</span>
+                        <span>{t('weigh')}</span>
                       </button>
 
                       <button
@@ -200,22 +218,22 @@ export const CollectorDashboard: React.FC = () => {
             )}
 
             {/* Nearby Pickup Requests Queue */}
-            <div className="space-y-4">
+            <div id="collector-pickups" className="scroll-mt-24 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-900 flex items-center space-x-2">
-                  <span>Nearby Pickup Requests</span>
+                  <span>{t('pickupQueue')}</span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">
                     {pendingRequests.length} Available
                   </span>
                 </h2>
-                <span className="text-xs text-slate-500">Auto-refresh: 15s</span>
+                <span className="text-sm text-slate-600">{t('activeOnly')}</span>
               </div>
 
               {pendingRequests.length === 0 ? (
                 <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 text-slate-500 space-y-2">
                   <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-                  <p className="text-sm font-semibold text-slate-800">All nearby pickups serviced!</p>
-                  <p className="text-xs text-slate-500">New household booking notifications will appear here instantly.</p>
+                  <p className="text-base font-bold text-slate-800">{t('allNearbyDone')}</p>
+                  <p className="text-sm text-slate-600">{t('newBookings')}</p>
                 </div>
               ) : (
                 pendingRequests.map((p) => (
@@ -255,22 +273,24 @@ export const CollectorDashboard: React.FC = () => {
                       <span className="font-bold text-slate-900">{p.totalEstimatedKg} kg total</span>
                     </div>
 
+                    <RecyclerMatches pickupId={p.id} />
+
                     {/* 3 Buttons: Accept, Navigate, Reject */}
                     <div className="flex items-center space-x-2 pt-1">
                       <button
                         onClick={() => acceptPickup(p.id, activeCollector.id)}
-                        className="flex-1 py-2 px-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center space-x-1"
+                        className="flex-1 min-h-14 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-base font-bold transition-colors cursor-pointer flex items-center justify-center space-x-2"
                       >
                         <Check className="w-3.5 h-3.5" />
-                        <span>Accept</span>
+                        <span>{t('accept')}</span>
                       </button>
 
                       <button
                         onClick={() => setSelectedRoutePickup(p)}
-                        className="py-2 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer flex items-center space-x-1"
+                        className="min-h-14 py-3 px-4 rounded-xl border-2 border-slate-300 hover:bg-slate-50 text-slate-700 text-base font-semibold transition-colors cursor-pointer flex items-center space-x-2"
                       >
                         <Navigation className="w-3.5 h-3.5 text-brand-600" />
-                        <span>Navigate</span>
+                        <span>{t('navigate')}</span>
                       </button>
 
                       <button
@@ -290,7 +310,7 @@ export const CollectorDashboard: React.FC = () => {
             {/* Completed Pickups Log */}
             <div className="space-y-3 pt-4">
               <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                Recent Completed Collections Today
+                {t('recentCollections')}
               </h3>
               
               <div className="space-y-2">
@@ -328,10 +348,10 @@ export const CollectorDashboard: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <MapIcon className="w-4 h-4 text-brand-600" />
-                  <h3 className="text-sm font-bold text-slate-900">Ward 31 Eco-Route Navigation</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Route overview</h3>
                 </div>
                 <span className="text-[11px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold">
-                  GPS Live
+                  Location not shared
                 </span>
               </div>
 
@@ -349,20 +369,20 @@ export const CollectorDashboard: React.FC = () => {
                 {/* Collector Icon Position (Pulsing) */}
                 <div className="relative z-10 self-start bg-slate-900/90 text-white p-2 rounded-xl border border-emerald-500/50 shadow-lg flex items-center space-x-2">
                   <div className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
-                  <span className="text-xs font-mono font-bold">Ramesh (E-Loader)</span>
+                  <span className="text-xs font-mono font-bold">{activeCollector.name || 'Collector account'}</span>
                 </div>
 
                 {/* Waypoint 1: Active Household Destination */}
                 <div className="relative z-10 self-center bg-brand-500 text-slate-950 p-2.5 rounded-xl font-bold text-xs shadow-xl flex items-center space-x-1.5">
                   <MapPin className="w-4 h-4 text-slate-950" />
                   <span>
-                    {selectedRoutePickup ? selectedRoutePickup.householdName : 'Nilgiri Apts (0.8 km)'}
+                    {selectedRoutePickup ? selectedRoutePickup.address : 'No active pickup selected'}
                   </span>
                 </div>
 
                 {/* Waypoint 2: Municipal Sorting Facility */}
                 <div className="relative z-10 self-end bg-indigo-950/90 text-indigo-200 p-2 rounded-xl border border-indigo-700 text-[11px] font-mono flex items-center space-x-1">
-                  <span>Pragati Maidan MRF Depot</span>
+                  <span>{selectedRouteBatch?.recyclerName || 'Recycler not assigned'}</span>
                 </div>
               </div>
 
@@ -370,15 +390,15 @@ export const CollectorDashboard: React.FC = () => {
               <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs space-y-1.5">
                 <div className="flex justify-between text-slate-600">
                   <span>Current Hub:</span>
-                  <span className="font-semibold text-slate-800">Connaught Place Central</span>
+                  <span className="font-semibold text-slate-800">{activeCollector.currentLocation.areaName || 'Not recorded'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Next Drop-off:</span>
-                  <span className="font-semibold text-indigo-700">NDMC Material Recovery Facility</span>
+                  <span className="font-semibold text-indigo-700">{selectedRouteBatch?.recyclerName || 'Not assigned'}</span>
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Battery / Fuel Range:</span>
-                  <span className="font-semibold text-emerald-600">42 km (84% Charge)</span>
+                  <span className="font-semibold text-emerald-600">Not recorded</span>
                 </div>
               </div>
 
@@ -414,4 +434,3 @@ export const CollectorDashboard: React.FC = () => {
     </div>
   );
 };
-

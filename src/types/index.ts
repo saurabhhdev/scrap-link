@@ -1,5 +1,23 @@
 export type UserRole = 'household' | 'collector' | 'recycler' | 'admin';
 
+/** Material catalog entry loaded from the backend. */
+export interface Material {
+  id: string;
+  name: string;
+  category: string;
+  unit: string;
+}
+
+/** Dated market observation; each update creates a history point. */
+export interface Price {
+  id: string;
+  materialId: string;
+  amount: number;
+  location: string;
+  date: string;
+  source: string;
+}
+
 export interface WasteCategory {
   id: string;
   name: string;
@@ -19,6 +37,7 @@ export interface MaterialBookingItem {
   estimatedKg: number;
   ratePerKg: number;
   estimatedValue: number;
+  condition?: 'clean' | 'mixed' | 'damaged';
 }
 
 export type PickupStatus = 
@@ -61,6 +80,7 @@ export interface PickupRequest {
   preferredDate: string;
   preferredTimeSlot: string;
   notes?: string;
+  condition?: 'clean' | 'mixed' | 'damaged';
   assignedCollectorId?: string;
   assignedCollectorName?: string;
   assignedCollectorPhone?: string;
@@ -128,10 +148,13 @@ export interface Recycler {
   eprCreditsIssued: number;
   isoCertifications: string[];
   co2OffsetTotalTons: number;
+  verificationStatus?: 'verified' | 'pending' | 'unverified';
 }
 
 export interface RecyclingBatch {
   id: string; // e.g. "BATCH-2026-EPR-882"
+  directLotId?: string;
+  isDemo?: boolean;
   materialType: string;
   totalWeightKg: number;
   sourceWasteIds: string[];
@@ -141,11 +164,30 @@ export interface RecyclingBatch {
   recyclerName: string;
   receivedAt: string;
   processedAt?: string;
-  purityGrade: 'A+ (Ultra Pure)' | 'A (Industrial Grade)' | 'B (Secondary Blend)';
+  purityGrade: 'A+ (Ultra Pure)' | 'A (Industrial Grade)' | 'B (Secondary Blend)' | 'Unassessed';
   status: 'inbound' | 'received' | 'processed';
   eprCreditCertificateNo?: string;
   co2SavedKg: number;
   waterSavedLitres: number;
+  handoverId?: string;
+}
+
+export interface HandoverRecord {
+  handoverId: string;
+  lotId: string;
+  collectorId: string;
+  recyclerId: string;
+  material: string;
+  weightKg: number;
+  value: number;
+  timestamp: string;
+  location: { city: string; facility: string };
+  payment: { amount: number; mode: string; status: 'recorded' | 'unavailable'; paidAt?: string };
+  confirmations: {
+    collector: { confirmed: boolean; confirmedAt?: string };
+    recycler: { confirmed: boolean; confirmedAt?: string };
+  };
+  integrityHash: string;
 }
 
 export interface MandiRate {
@@ -176,4 +218,3 @@ export interface ImpactStats {
   totalPcrPelletsSuppliedKg?: number;
   activeWardsCovered?: number;
 }
-

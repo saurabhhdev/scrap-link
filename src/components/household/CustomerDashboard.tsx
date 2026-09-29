@@ -19,24 +19,22 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { useApp } from '../../context/AppContext';
 import { IconPlate } from '../ui/IconPlate';
-import { WASTE_CATEGORIES } from '../../data/mockData';
 
 export const CustomerDashboard: React.FC = () => {
   const { 
     currentUser, 
     pickups, 
     setActiveTab, 
-    viewWasteDetails 
+    viewWasteDetails,
+    wasteCategories
   } = useApp();
 
-  const customerName = currentUser?.name || 'Priya Sharma';
-  const customerPhone = currentUser?.phone || '+91 98712 30044';
-  const customerWard = currentUser?.ward || 'NDMC Ward 31 (Central Delhi)';
+  const customerName = currentUser?.name || '';
+  const customerPhone = currentUser?.phone || '';
+  const customerWard = currentUser?.ward || '';
 
   // Pickups for this customer
-  const myPickups = pickups.filter(p => 
-    p.householdPhone === customerPhone || p.householdName.toLowerCase().includes(customerName.toLowerCase().split(' ')[0])
-  );
+  const myPickups = currentUser ? pickups.filter(p => p.householdId === currentUser.id) : [];
 
   const activePickups = myPickups.filter(p => p.status === 'requested' || p.status === 'in_transit');
   const pastPickups = myPickups.filter(p => p.status === 'collected' || p.status === 'at_sorting' || p.status === 'recycled');
@@ -353,7 +351,7 @@ export const CustomerDashboard: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {WASTE_CATEGORIES.slice(0, 4).map((cat) => (
+            {wasteCategories.slice(0, 4).map((cat) => (
               <div key={cat.id} className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-1">
                 <span className="text-[11px] text-slate-500 font-medium block truncate">
                   {cat.name.split('(')[0]}

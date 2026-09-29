@@ -1,260 +1,33 @@
-import React, { useState } from 'react';
-import { 
-  ShieldCheck, 
-  Users, 
-  Building2, 
-  CheckCircle2, 
-  AlertTriangle, 
-  Clock, 
-  FileCheck, 
-  Search, 
-  Check, 
-  X, 
-  ExternalLink,
-  Award,
-  TrendingUp,
-  Scale,
-  Truck
-} from 'lucide-react';
-import { useApp } from '../../context/AppContext';
-import { IconPlate } from '../ui/IconPlate';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { AlertTriangle, BadgeCheck, Database, FileText, Plus, RefreshCw, ShieldCheck, Users } from 'lucide-react';
+import { api } from '../../services/api';
 
-export const AdminDashboard: React.FC = () => {
-  const { collectors, recyclers, pickups, addNotification, setActiveTab, viewWasteDetails } = useApp();
+type AdminData = { synthetic: boolean; label: string; summary: { users:number; recyclers:number; requests:number; lots:number; offers:number; materialKg:number; transactionValue:number; completedTransactions:number; pendingTransactions:number }; users:{id:string;name:string;phone:string;role:string;verified?:boolean;active?:boolean}[]; recyclers:{id:string;name:string;verificationStatus?:'verified'|'pending'|'unverified';cpcbLicenseNo:string}[]; materials:{id:string;name:string;category:string;unit:string;active:boolean}[]; pickups:{id:string;householdName:string;city:string;status:string;items:{categoryName:string;estimatedKg:number}[];createdAt:string}[]; lots:{_id:string;material:string;weightKg:number;status:string;location:{city:string};collector?:{name:string}}[]; offers:{_id:string;amount:number;status:string;lot?:{material:string};collector?:{name:string};recycler?:{name:string;recyclerProfile?:{facilityName?:string}}}[]; recentActivity:{_id:string;title:string;message:string;createdAt:string}[]; transactions:{transactionId:string;pickupId:string;collectorId:string;amount:number;status:string;occurredAt:string}[]; materialVolume:{material:string;label:string;kg:number;value:number}[]; monthly:{month:string;value:number;paid:number;pending:number;transactions:number}[]; priceTrends:{material:string;amount:number;change:number;synthetic:boolean}[]; collectorActivity:{id:string;name:string;collections:number;value:number}[]; recyclerActivity:{id:string;name:string;batches:number;processed:number;verified:boolean}[] };
+type Audit={_id:string;action:string;entityType:string;entityId:string;summary:string;createdAt:string};
+const money=(value:number)=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR',maximumFractionDigits:0}).format(value||0);
+const ChartCard:React.FC<{title:string;caption:string;children:React.ReactElement}>=({title,caption,children})=><article className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black text-slate-900">{title}</h2><p className="mt-1 text-xs text-slate-500">{caption}</p><div className="mt-4 h-64"><ResponsiveContainer width="100%" height="100%">{children}</ResponsiveContainer></div></article>;
 
-  const [pendingKYC, setPendingKYC] = useState([
-    {
-      id: 'KYC-2026-902',
-      name: 'Santosh Kumar Bind',
-      vehicle: 'Cycle Rickshaw Cart',
-      ward: 'Ward 12 (West Delhi)',
-      aadhaarNo: 'XXXX-XXXX-8921',
-      eShramNo: 'UAN-9921-8840',
-      submittedAt: 'Today, 11:20 AM',
-      status: 'pending'
-    },
-    {
-      id: 'KYC-2026-903',
-      name: 'Kavita Rani',
-      vehicle: 'E-Rickshaw Trike',
-      ward: 'Ward 44 (South Delhi)',
-      aadhaarNo: 'XXXX-XXXX-4410',
-      eShramNo: 'UAN-4410-1092',
-      submittedAt: 'Yesterday, 04:15 PM',
-      status: 'pending'
-    }
-  ]);
-
-  const handleApproveKYC = (id: string, name: string) => {
-    setPendingKYC(prev => prev.filter(k => k.id !== id));
-    addNotification('Collector KYC Approved', `${name} has been issued official Digital Partner ID & Green Card.`, 'success');
-  };
-
-  const handleRejectKYC = (id: string, name: string) => {
-    setPendingKYC(prev => prev.filter(k => k.id !== id));
-    addNotification('KYC Returned for Correction', `${name}'s documents flagged for re-upload.`, 'alert');
-  };
-
-  // Real dynamic calculations from active state
-  const totalIntakeKg = pickups.reduce((acc, p) => acc + (p.actualWeightKg || (p.status !== 'requested' ? p.totalEstimatedKg : 0)), 0);
-  const activePickupsToday = pickups.filter(p => p.status === 'requested' || p.status === 'in_transit').length;
-  const totalPayoutsRupees = pickups.reduce((acc, p) => acc + (p.actualPaidAmount || 0), 0);
-
-  return (
-    <div className="py-8 bg-slate-50 min-h-[calc(100vh-4rem)]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-        
-        {/* Header */}
-        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center space-x-4">
-            <IconPlate 
-              icon={<ShieldCheck className="w-8 h-8" />} 
-              variant="purple" 
-              size="xl" 
-            />
-
-            <div>
-              <div className="flex items-center space-x-2">
-                <h1 className="text-2xl font-black text-slate-900">
-                  Municipal Corporation Urban Local Body Oversight
-                </h1>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
-                  SBM-Urban 2.0
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Centralized civic oversight for collector formalization, calibrated scale accuracy, and ward circularity quotas.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 text-xs font-mono text-slate-600 bg-slate-100 px-3.5 py-2 rounded-xl border border-slate-200">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>National Circular Operations Center • Live Sync</span>
-          </div>
-        </div>
-
-        {/* 4 Real-time Dynamic Stats Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-            <IconPlate 
-              icon={<Users className="w-4 h-4" />} 
-              variant="teal" 
-              size="md" 
-            />
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
-                {collectors.length}
-              </div>
-              <span className="text-xs font-bold text-teal-700">Verified Fleet Partners</span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-mono">100% e-Shram & Aadhaar authenticated</span>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-            <IconPlate 
-              icon={<Scale className="w-4 h-4" />} 
-              variant="emerald" 
-              size="md" 
-            />
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
-                {totalIntakeKg.toFixed(1)} <span className="text-xs font-normal text-slate-500 font-sans">kg</span>
-              </div>
-              <span className="text-xs font-bold text-emerald-700">Total Verified Intake</span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-mono">Real-time doorstep scale logs</span>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-            <IconPlate 
-              icon={<Truck className="w-4 h-4" />} 
-              variant="amber" 
-              size="md" 
-            />
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
-                {activePickupsToday}
-              </div>
-              <span className="text-xs font-bold text-amber-700">Active Doorstep Pickups</span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-mono">Currently assigned or in transit</span>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-2xs space-y-2">
-            <IconPlate 
-              icon={<Building2 className="w-4 h-4" />} 
-              variant="indigo" 
-              size="md" 
-            />
-            <div>
-              <div className="text-2xl font-black text-slate-900 font-mono">
-                {recyclers.length}
-              </div>
-              <span className="text-xs font-bold text-indigo-700">Authorized Reprocessors</span>
-            </div>
-            <span className="text-[11px] text-slate-400 font-mono">CPCB verified secondary mills</span>
-          </div>
-        </div>
-
-        {/* Collector KYC Verification Queue */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                Collector Onboarding & Formalization Queue
-              </h3>
-              <p className="text-xs text-slate-500">
-                Grant informal waste practitioners legal recognition, Ayushman Bharat access, and certified IoT scales.
-              </p>
-            </div>
-            <span className="text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 font-mono">
-              {pendingKYC.length} Pending Review
-            </span>
-          </div>
-
-          {pendingKYC.length === 0 ? (
-            <div className="p-8 text-center text-xs text-slate-500">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
-              <p className="font-semibold text-slate-800">All collector verification requests resolved!</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {pendingKYC.map((item) => (
-                <div key={item.id} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                        {item.id}
-                      </span>
-                      <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
-                      <span className="text-xs text-slate-500">• {item.ward}</span>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 pt-1 font-mono">
-                      <span>Vehicle: <strong className="text-slate-700">{item.vehicle}</strong></span>
-                      <span>Aadhaar: <strong className="text-slate-700">{item.aadhaarNo}</strong></span>
-                      <span>e-Shram: <strong className="text-slate-700">{item.eShramNo}</strong></span>
-                      <span className="font-sans">Submitted: {item.submittedAt}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <button
-                      onClick={() => handleApproveKYC(item.id, item.name)}
-                      className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer flex items-center space-x-1"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                      <span>Approve & Issue ID</span>
-                    </button>
-                    <button
-                      onClick={() => handleRejectKYC(item.id, item.name)}
-                      className="px-3 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 text-xs font-semibold cursor-pointer"
-                    >
-                      Flag Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Recyclers Compliance Directory */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs p-6 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">Authorized Industrial Recyclers</h3>
-              <p className="text-xs text-slate-500">Processing facilities certified by State Pollution Control Boards & CPCB</p>
-            </div>
-            <span className="text-xs text-indigo-700 font-semibold bg-indigo-50 px-2.5 py-1 rounded-md border border-indigo-200 font-mono">
-              {recyclers.length} Facilities Active
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recyclers.map((rec) => (
-              <div key={rec.id} className="bg-slate-50 rounded-2xl p-4 border border-slate-200 space-y-2.5 text-xs">
-                <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-slate-900 text-sm line-clamp-1">{rec.name}</h4>
-                  <span className="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 font-bold rounded">
-                    Active ✓
-                  </span>
-                </div>
-                <p className="text-slate-500 text-[11px] font-mono">{rec.cpcbLicenseNo}</p>
-                <div className="pt-2 border-t border-slate-200 flex justify-between text-slate-600">
-                  <span>Processed:</span>
-                  <strong className="text-slate-900 font-mono">{rec.totalTonsProcessed} Tons</strong>
-                </div>
-                <div className="flex justify-between text-slate-600">
-                  <span>EPR Credits:</span>
-                  <strong className="text-indigo-700 font-mono">{rec.eprCreditsIssued} Credits</strong>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
-    </div>
-  );
+export const AdminDashboard:React.FC=()=>{
+ const [data,setData]=useState<AdminData|null>(null),[logs,setLogs]=useState<Audit[]>([]),[error,setError]=useState(''),[busy,setBusy]=useState('');
+ const [material,setMaterial]=useState({name:'',category:'',unit:'kg'}),[price,setPrice]=useState({materialId:'',amount:'',location:''});
+ const load=useCallback(async()=>{setError('');try{const [overview,audit]=await Promise.all([api<AdminData>('/admin/overview'),api<{logs:Audit[]}>('/admin/audit-logs')]);setData(overview);setLogs(audit.logs);setPrice(current=>current.materialId?current:{...current,materialId:overview.materials[0]?.id||''});}catch(cause){setError(cause instanceof Error?cause.message:'Could not load the secured admin console.');}},[]);
+ useEffect(()=>{void load();},[load]);
+ useEffect(()=>{const refresh=()=>void load();window.addEventListener('platform:update',refresh);return()=>window.removeEventListener('platform:update',refresh);},[load]);
+ const update=async(url:string,payload:unknown,method='PATCH')=>{setBusy(url);try{await api(url,{method,body:JSON.stringify(payload)});await load();}catch(cause){setError(cause instanceof Error?cause.message:'Update failed.');}finally{setBusy('');}};
+ const monthly=(data?.monthly||[]).map(row=>({...row,label:new Date(`${row.month}-01T00:00:00Z`).toLocaleDateString('en-IN',{month:'short',year:'2-digit',timeZone:'UTC'})}));
+ const metrics:Array<{label:string;value:string|number;Icon:React.ElementType;tone:string}>=[{label:'Users',value:data?.summary.users||0,Icon:Users,tone:'text-indigo-700'},{label:'Material volume',value:`${(data?.summary.materialKg||0).toLocaleString('en-IN')} kg`,Icon:Database,tone:'text-emerald-700'},{label:'Transaction value',value:money(data?.summary.transactionValue||0),Icon:BadgeCheck,tone:'text-slate-900'},{label:'Pending payments',value:data?.summary.pendingTransactions||0,Icon:AlertTriangle,tone:'text-amber-700'}];
+ return <main className="min-h-[calc(100vh-4rem)] bg-slate-50 py-8"><div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+  <header id="admin-dashboard" className="flex flex-col justify-between gap-4 rounded-3xl bg-slate-950 p-6 text-white sm:flex-row sm:items-center sm:p-8"><div className="flex gap-4"><span className="rounded-2xl bg-indigo-400/20 p-3 text-indigo-200"><ShieldCheck size={30}/></span><div><p className="text-xs font-bold uppercase tracking-widest text-indigo-200">Admin only</p><h1 className="mt-1 text-2xl font-black">Circular operations console</h1><p className="mt-1 text-sm text-slate-300">Users, recyclers, materials, prices, transactions and audit trails.</p></div></div><button onClick={()=>void load()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-white px-4 text-sm font-bold text-slate-900"><RefreshCw size={17}/>Refresh</button></header>
+  {error&&<div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{error}</div>}
+  <section id="admin-user-metrics" className="scroll-mt-24 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(({label,value,Icon,tone})=><article key={label} className="rounded-2xl border border-slate-200 bg-white p-5"><Icon className={tone} size={23}/><p className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">{label}</p><p className={`mt-1 text-2xl font-black ${tone}`}>{value}</p></article>)}</section>
+  <section id="admin-users" className="scroll-mt-24 grid gap-6 xl:grid-cols-2"><article className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">User accounts</h2><div className="mt-4 max-h-80 overflow-auto"><table className="w-full min-w-[520px] text-left text-sm"><thead className="sticky top-0 border-b bg-white text-xs uppercase text-slate-500"><tr><th className="pb-2">Name</th><th className="pb-2">Role</th><th className="pb-2">Phone</th><th className="pb-2">Account</th></tr></thead><tbody>{data?.users.map(user=><tr key={user.id} className="border-b border-slate-100"><td className="py-2">{user.name}</td><td className="py-2 capitalize">{user.role}</td><td className="py-2 font-mono text-xs">{user.phone}</td><td className="py-2">{user.active?'Active':'Disabled'}{user.role==='collector'?` · ${user.verified?'Verified':'Unverified'}`:''}</td></tr>)}</tbody></table></div></article><article className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Platform activity</h2><p className="mt-1 text-xs text-slate-500">Recent saved workflow notifications.</p><div className="mt-4 max-h-80 space-y-2 overflow-auto">{data?.recentActivity.map(item=><div key={item._id} className="rounded-xl bg-slate-50 p-3"><p className="text-sm font-bold">{item.title}</p><p className="mt-1 text-xs text-slate-600">{item.message}</p><time className="mt-1 block text-[10px] text-slate-400">{new Date(item.createdAt).toLocaleString('en-IN')}</time></div>)}{!data?.recentActivity.length&&<p className="text-sm text-slate-500">No recent platform activity.</p>}</div></article></section>
+  <section id="admin-requests" className="scroll-mt-24 grid gap-6 xl:grid-cols-2"><article className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Customer requests & pickups</h2><div className="mt-4 max-h-96 overflow-auto"><table className="w-full min-w-[580px] text-left text-sm"><thead className="sticky top-0 border-b bg-white text-xs uppercase text-slate-500"><tr><th className="pb-2">Request</th><th className="pb-2">Customer</th><th className="pb-2">Waste</th><th className="pb-2">Location</th><th className="pb-2">Status</th></tr></thead><tbody>{data?.pickups.map(pickup=><tr key={pickup.id} className="border-b border-slate-100"><td className="py-2 font-mono text-xs">{pickup.id}</td><td className="py-2">{pickup.householdName}</td><td className="py-2">{pickup.items.map(item=>`${item.categoryName} ${item.estimatedKg}kg`).join(', ')}</td><td className="py-2">{pickup.city}</td><td className="py-2 capitalize">{pickup.status.replaceAll('_',' ')}</td></tr>)}</tbody></table></div></article><article className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Waste lots</h2><div className="mt-4 max-h-96 overflow-auto"><table className="w-full min-w-[480px] text-left text-sm"><thead className="sticky top-0 border-b bg-white text-xs uppercase text-slate-500"><tr><th className="pb-2">Material</th><th className="pb-2">Weight</th><th className="pb-2">Collector</th><th className="pb-2">Location</th><th className="pb-2">Status</th></tr></thead><tbody>{data?.lots.map(lot=><tr key={lot._id} className="border-b border-slate-100"><td className="py-2">{lot.material}</td><td className="py-2">{lot.weightKg} kg</td><td className="py-2">{lot.collector?.name||'—'}</td><td className="py-2">{lot.location.city}</td><td className="py-2 capitalize">{lot.status.replaceAll('_',' ')}</td></tr>)}</tbody></table></div></article></section>
+  <section id="admin-offers" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Recycler offers & handovers</h2><div className="mt-4 overflow-auto"><table className="w-full min-w-[620px] text-left text-sm"><thead className="border-b text-xs uppercase text-slate-500"><tr><th className="pb-2">Material</th><th className="pb-2">Collector</th><th className="pb-2">Recycler</th><th className="pb-2">Offer</th><th className="pb-2">Status</th></tr></thead><tbody>{data?.offers.map(offer=><tr key={offer._id} className="border-b border-slate-100"><td className="py-2">{offer.lot?.material||'Lot'}</td><td className="py-2">{offer.collector?.name||'—'}</td><td className="py-2">{offer.recycler?.recyclerProfile?.facilityName||offer.recycler?.name||'—'}</td><td className="py-2">{money(offer.amount)}</td><td className="py-2 capitalize">{offer.status.replaceAll('_',' ')}</td></tr>)}</tbody></table></div></section>
+  <section id="admin-analytics" className="scroll-mt-24 grid gap-6 xl:grid-cols-2"><ChartCard title="Material volume · kg" caption="Completed collection records. Empty means none recorded."><BarChart data={data?.materialVolume||[]}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="label" fontSize={11}/><YAxis fontSize={11}/><Tooltip/><Bar dataKey="kg" fill="#0f766e" radius={[5,5,0,0]}/></BarChart></ChartCard><ChartCard title="Transaction value and state" caption="Amounts and statuses from saved transactions."><BarChart data={monthly}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="label" fontSize={11}/><YAxis tickFormatter={v=>`₹${v}`} fontSize={11}/><Tooltip formatter={v=>money(Number(v))}/><Legend/><Bar dataKey="paid" stackId="a" fill="#16835d" name="Paid"/><Bar dataKey="pending" stackId="a" fill="#e9a23b" name="Pending"/></BarChart></ChartCard><ChartCard title="Price trend · recorded observations" caption="Daily average across price observations saved in the database."><LineChart data={data?.priceTrends||[]}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="material" tickFormatter={value=>new Date(`${value}T00:00:00Z`).toLocaleDateString('en-IN',{day:'numeric',month:'short',timeZone:'UTC'})} fontSize={10}/><YAxis fontSize={11}/><Tooltip formatter={v=>money(Number(v))}/><Line dataKey="amount" stroke="#4f46e5" strokeWidth={3} dot={{r:4}}/></LineChart></ChartCard><ChartCard title="Collector activity" caption="Collections from recorded transactions."><BarChart data={data?.collectorActivity||[]}><CartesianGrid strokeDasharray="3 3" vertical={false}/><XAxis dataKey="name" fontSize={10}/><YAxis fontSize={11}/><Tooltip/><Bar dataKey="collections" fill="#0284c7" radius={[5,5,0,0]}/></BarChart></ChartCard></section>
+  <section id="admin-verification" className="scroll-mt-24 grid gap-6 xl:grid-cols-2"><div className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Recycler verification</h2><p className="mt-1 text-sm text-slate-500">Every server-authorized change is audited.</p><div className="mt-4 space-y-3">{data?.recyclers.map(recycler=><div key={recycler.id} className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3"><div><b className="block text-sm">{recycler.name}</b><span className="font-mono text-xs text-slate-500">{recycler.cpcbLicenseNo}</span></div><select value={recycler.verificationStatus||'unverified'} disabled={busy.includes(recycler.id)} onChange={event=>void update(`/admin/recyclers/${encodeURIComponent(recycler.id)}/verification`,{status:event.target.value})} className="clean-input font-bold"><option value="verified">Verified</option><option value="pending">Pending</option><option value="unverified">Unverified</option></select></div>)}</div></div><div className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Collector verification</h2><p className="mt-1 text-sm text-slate-500">Protected user management action.</p><div className="mt-4 space-y-3">{data?.users.filter(user=>user.role==='collector').map(user=><div key={user.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 p-3"><div><b className="block text-sm">{user.name}</b><span className="font-mono text-xs text-slate-500">{user.id}</span></div><button disabled={busy.includes(user.id)} onClick={()=>void update(`/admin/users/${encodeURIComponent(user.id)}`,{isVerified:!user.verified})} className={`min-h-10 rounded-xl px-3 text-sm font-bold ${user.verified?'bg-emerald-100 text-emerald-900':'bg-amber-100 text-amber-900'}`}>{user.verified?'Verified':'Verify user'}</button></div>)}</div></div></section>
+  <section id="admin-materials" className="scroll-mt-24 grid gap-6 xl:grid-cols-2"><form onSubmit={event=>{event.preventDefault();void update('/admin/materials',material,'POST').then(()=>setMaterial({name:'',category:'Plastic',unit:'kg'}));}} className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Material management</h2><div className="mt-4 grid gap-3 sm:grid-cols-3"><input required placeholder="Material name" value={material.name} onChange={e=>setMaterial({...material,name:e.target.value})} className="clean-input"/><input required placeholder="Category" value={material.category} onChange={e=>setMaterial({...material,category:e.target.value})} className="clean-input"/><input required placeholder="Unit" value={material.unit} onChange={e=>setMaterial({...material,unit:e.target.value})} className="clean-input"/></div><button className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl bg-slate-900 px-4 text-sm font-bold text-white"><Plus size={17}/>Add material</button><div className="mt-4 flex flex-wrap gap-2">{data?.materials.map(entry=><span key={entry.id} className="rounded-lg bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700">{entry.name} · {entry.category}</span>)}</div></form><form onSubmit={event=>{event.preventDefault();void update('/admin/prices',{...price,amount:Number(price.amount)},'POST').then(()=>setPrice(current=>({...current,amount:''})));}} className="rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Price management</h2><p className="mt-1 text-sm text-slate-500">New admin entries are non-synthetic observations.</p><div className="mt-4 grid gap-3 sm:grid-cols-3"><select value={price.materialId} onChange={e=>setPrice({...price,materialId:e.target.value})} className="clean-input">{data?.materials.map(entry=><option key={entry.id} value={entry.id}>{entry.name}</option>)}</select><input required min="0" type="number" placeholder="₹ / kg" value={price.amount} onChange={e=>setPrice({...price,amount:e.target.value})} className="clean-input"/><input required placeholder="Location" value={price.location} onChange={e=>setPrice({...price,location:e.target.value})} className="clean-input"/></div><button className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl bg-emerald-700 px-4 text-sm font-bold text-white"><Plus size={17}/>Add price observation</button></form></section>
+  <section id="admin-audit-logs" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-2"><FileText size={20}/><h2 className="font-black">Audit log</h2></div><LogTable logs={logs}/></section><section id="admin-transactions" className="scroll-mt-24 rounded-3xl border border-slate-200 bg-white p-5"><h2 className="font-black">Transaction monitoring</h2><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[600px] text-left text-sm"><thead className="border-b text-xs uppercase tracking-wide text-slate-500"><tr><th className="pb-3">Transaction</th><th className="pb-3">Collector</th><th className="pb-3">Amount</th><th className="pb-3">Status</th><th className="pb-3">Time</th></tr></thead><tbody>{data?.transactions.map(row=><tr key={row.transactionId} className="border-b border-slate-100"><td className="py-3 font-mono text-xs">{row.transactionId}</td><td className="py-3">{row.collectorId}</td><td className="py-3 font-bold">{money(row.amount)}</td><td className="py-3"><span className={`rounded-full px-2 py-1 text-xs font-bold ${row.status==='paid'?'bg-emerald-100 text-emerald-900':row.status==='pending'?'bg-amber-100 text-amber-900':'bg-rose-100 text-rose-900'}`}>{row.status}</span></td><td className="py-3 text-xs text-slate-500">{new Date(row.occurredAt).toLocaleString('en-IN')}</td></tr>)}{!data?.transactions.length&&<tr><td className="py-6 text-slate-500" colSpan={5}>No recorded transactions yet.</td></tr>}</tbody></table></div></section>
+ </div></main>;
 };
+const LogTable:React.FC<{logs:Audit[]}>=({logs})=><div className="mt-4 overflow-x-auto"><table className="w-full min-w-[650px] text-left text-sm"><thead className="border-b text-xs uppercase tracking-wide text-slate-500"><tr><th className="pb-3">Time</th><th className="pb-3">Action</th><th className="pb-3">Entity</th><th className="pb-3">Summary</th></tr></thead><tbody>{logs.map(log=><tr key={log._id} className="border-b border-slate-100"><td className="py-3 text-xs text-slate-500">{new Date(log.createdAt).toLocaleString('en-IN')}</td><td className="py-3 font-mono text-xs">{log.action}</td><td className="py-3">{log.entityType} · {log.entityId}</td><td className="py-3 text-slate-600">{log.summary}</td></tr>)}{!logs.length&&<tr><td className="py-6 text-slate-500" colSpan={4}>No administrative changes have been recorded yet.</td></tr>}</tbody></table></div>;

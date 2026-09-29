@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from './context/AppContext';
 import { Navbar } from './components/layout/Navbar';
-import { BottomNav } from './components/layout/BottomNav';
-import { Footer } from './components/layout/Footer';
 import { HeroSection } from './components/landing/HeroSection';
 import { HowItWorks } from './components/landing/HowItWorks';
 import { CustomerDashboard } from './components/household/CustomerDashboard';
@@ -16,6 +14,13 @@ import { ImpactDashboard } from './components/impact/ImpactDashboard';
 import { ScrapRateCalculator } from './components/rates/ScrapRateCalculator';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AuthModal } from './components/auth/AuthModal';
+import { PriceBoard } from './components/prices/PriceBoard';
+import { CollectorLotCreator } from './components/collector/CollectorLotCreator';
+import { CollectorMyLots } from './components/collector/CollectorMyLots';
+import { RecyclerOfferInbox } from './components/collector/RecyclerOfferInbox';
+import { CollectorEarningsLedger } from './components/collector/CollectorEarningsLedger';
+import { SafetyGuide } from './components/collector/SafetyGuide';
+import { RecyclerMarketplace } from './components/recycler/RecyclerMarketplace';
 
 export const MainContent: React.FC = () => {
   const { activeTab } = useApp();
@@ -90,6 +95,13 @@ export const MainContent: React.FC = () => {
             </motion.div>
           )}
 
+          {activeTab === 'create-lot' && <motion.div key="create-lot" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><CollectorLotCreator /></div></motion.div>}
+          {activeTab === 'my-lots' && <motion.div key="my-lots" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="px-4 py-8 sm:px-6 lg:px-8"><CollectorMyLots /></div></motion.div>}
+          {activeTab === 'offers' && <motion.div key="offers" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8"><RecyclerOfferInbox /></div></motion.div>}
+          {activeTab === 'earnings' && <motion.div key="earnings" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="px-4 py-8 sm:px-6 lg:px-8"><CollectorEarningsLedger /></div></motion.div>}
+          {activeTab === 'safety' && <motion.div key="safety" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="px-4 py-8 sm:px-6 lg:px-8"><SafetyGuide /></div></motion.div>}
+          {activeTab === 'marketplace' && <motion.div key="marketplace" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}><div className="py-8"><RecyclerMarketplace /></div></motion.div>}
+
           {activeTab === 'trace' && (
             <motion.div
               key="trace"
@@ -138,6 +150,12 @@ export const MainContent: React.FC = () => {
             </motion.div>
           )}
 
+          {activeTab === 'price-board' && (
+            <motion.div key="price-board" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
+              <PriceBoard />
+            </motion.div>
+          )}
+
           {activeTab === 'admin' && (
             <motion.div
               key="admin"
@@ -151,12 +169,6 @@ export const MainContent: React.FC = () => {
           )}
         </AnimatePresence>
       </main>
-
-      {/* Footer */}
-      <Footer />
-
-      {/* Mobile Bottom Navigation */}
-      <BottomNav onOpenAuth={() => setIsAuthOpen(true)} />
 
       {/* Role-based Auth Modal */}
       <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />

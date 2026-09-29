@@ -27,19 +27,22 @@ export const WasteTracker: React.FC = () => {
   const { 
     searchWasteId, 
     setSearchWasteId, 
+    currentUser,
     pickups, 
     viewWasteDetails,
-    setActiveTab 
+    setActiveTab,
+    batches
   } = useApp();
 
-  const [inputVal, setInputVal] = useState(searchWasteId || 'KC-2026-004821');
+  const [inputVal, setInputVal] = useState(searchWasteId || '');
   const [showCertModal, setShowCertModal] = useState(false);
   const [copiedHash, setCopiedHash] = useState(false);
 
   // Find requested pickup or fallback to first
-  const currentPickup: PickupRequest = pickups.find(
+  const currentPickup: PickupRequest | undefined = pickups.find(
     p => p.id.toUpperCase() === (searchWasteId || inputVal).toUpperCase()
-  ) || pickups[0];
+  );
+  const currentBatch = currentPickup?.recyclingBatchId ? batches.find((batch) => batch.id === currentPickup.recyclingBatchId) : undefined;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,12 +59,6 @@ export const WasteTracker: React.FC = () => {
     }
   };
 
-  const sampleRecords = [
-    { id: 'KC-2026-004821', label: 'KC-2026-004821 (Recycled ✓)', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
-    { id: 'KC-2026-008314', label: 'KC-2026-008314 (At Sorting)', color: 'text-indigo-700 bg-indigo-50 border-indigo-200' },
-    { id: 'KC-2026-009142', label: 'KC-2026-009142 (Collected)', color: 'text-teal-700 bg-teal-50 border-teal-200' },
-    { id: 'KC-2026-009840', label: 'KC-2026-009840 (In-Transit)', color: 'text-amber-700 bg-amber-50 border-amber-200' },
-  ];
 
   return (
     <div className="py-10 bg-slate-50 min-h-[calc(100vh-4rem)]">
@@ -81,7 +78,7 @@ export const WasteTracker: React.FC = () => {
           </p>
         </div>
 
-        {/* Search Bar & Sample Records */}
+        {/* Search Bar */}
         <div className="max-w-2xl mx-auto space-y-3">
           <form 
             onSubmit={handleSearch}
@@ -90,7 +87,7 @@ export const WasteTracker: React.FC = () => {
             <Search className="w-5 h-5 text-slate-400 ml-3 shrink-0" />
             <input
               type="text"
-              placeholder="Enter Waste ID e.g. KC-2026-004821"
+              placeholder="Enter your waste ID"
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               className="w-full px-3 py-2 text-sm sm:text-base font-mono tracking-wider focus:outline-hidden uppercase"
@@ -103,22 +100,6 @@ export const WasteTracker: React.FC = () => {
             </button>
           </form>
 
-          {/* Sample Record Pills */}
-          <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-            <span className="text-slate-400 font-medium">Sample Records:</span>
-            {sampleRecords.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => {
-                  setInputVal(c.id);
-                  setSearchWasteId(c.id);
-                }}
-                className={`px-2.5 py-1 rounded-lg border font-mono text-[11px] font-semibold cursor-pointer hover:scale-105 transition-transform ${c.color}`}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
         </div>
 
         {/* Waste Traceability Profile Summary Card */}
@@ -181,7 +162,7 @@ export const WasteTracker: React.FC = () => {
                   </div>
                   <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200">
                     <span className="text-slate-500 block">Assigned Collector</span>
-                    <strong className="text-slate-900">{currentPickup.assignedCollectorName || 'Ramesh Kumar'}</strong>
+                    <strong className="text-slate-900">{currentPickup.assignedCollectorName || 'Not assigned'}</strong>
                   </div>
                 </div>
 
@@ -315,6 +296,8 @@ export const WasteTracker: React.FC = () => {
           </div>
         )}
 
+        {!currentPickup && <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600 shadow-sm">{currentUser ? 'No pickup matches that ID in your account.' : 'Sign in with an account that has access to this pickup, then enter its waste ID.'}</div>}
+
         {/* Certificate Modal */}
         {showCertModal && currentPickup && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fadeIn">
@@ -349,7 +332,7 @@ export const WasteTracker: React.FC = () => {
                 <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-200 text-xs font-mono space-y-1 text-slate-800">
                   <div className="flex justify-between">
                     <span>Certificate Ref:</span>
-                    <strong>{currentPickup.eprCertificateId || 'CPCB-EPR-2026-DEL-00941'}</strong>
+                    <strong>{currentPickup.eprCertificateId || 'Not issued'}</strong>
                   </div>
                   <div className="flex justify-between">
                     <span>Batch Digest:</span>
@@ -361,12 +344,12 @@ export const WasteTracker: React.FC = () => {
                   </div>
                   <div className="flex justify-between">
                     <span>Industrial Recycler:</span>
-                    <strong>GreenTerra Circular Polymers Ltd. (Okhla)</strong>
+                    <strong>{currentBatch?.recyclerName || 'Not recorded'}</strong>
                   </div>
                 </div>
 
                 <p className="text-xs text-slate-600 max-w-md mx-auto">
-                  This document serves as proof-of-circularity for corporate EPR offset claims. Collected by formalized partner <strong>{currentPickup.assignedCollectorName}</strong> and processed at zero-landfill industrial reprocessor.
+                  This record reflects the collection and processing details saved for this pickup. <strong>{currentPickup.assignedCollectorName || 'No collector assigned'}</strong>
                 </p>
 
                 <div className="pt-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
@@ -410,4 +393,3 @@ export const WasteTracker: React.FC = () => {
     </div>
   );
 };
-

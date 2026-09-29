@@ -21,16 +21,17 @@ import {
   Info
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
-import { WASTE_CATEGORIES } from '../../data/mockData';
 import { MaterialBookingItem, Collector, PickupRequest } from '../../types';
 
 export const SchedulePickup: React.FC = () => {
   const { 
     bookPickup, 
     collectors, 
+    currentUser,
+    wasteCategories,
     setActiveTab, 
-    setSearchWasteId,
-    viewWasteDetails 
+    viewWasteDetails,
+    viewCollectorProfile
   } = useApp();
 
   // Step 1: Material Selection & Estimated Value
@@ -40,35 +41,31 @@ export const SchedulePickup: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
 
   // Selected Materials State
-  const [selectedItems, setSelectedItems] = useState<{ [catId: string]: number }>({
-    paper: 12,
-    cardboard: 8,
-    pet_plastic: 5,
-  });
+  const [selectedItems, setSelectedItems] = useState<{ [catId: string]: number }>({});
 
   // Schedule Details State
   const [formData, setFormData] = useState({
-    name: 'Priya Sharma',
-    phone: '+91 98712 30044',
-    address: 'Flat 402, Nilgiri Apartments, Barakhamba Road, Connaught Place',
-    city: 'New Delhi',
-    ward: 'Ward 31 (New Delhi Central)',
-    pincode: '110001',
+    name: currentUser?.name || '',
+    phone: currentUser?.phone || '',
+    address: '',
+    city: '',
+    ward: currentUser?.ward || '',
+    pincode: '',
+    condition: 'mixed' as 'clean' | 'mixed' | 'damaged',
     date: new Date().toISOString().split('T')[0],
     slot: '10:00 AM - 12:00 PM',
-    notes: 'Recyclables bundled neatly in boxes near entrance.'
+    notes: ''
   });
 
   // Selected Collector for booking
-  const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [createdBooking, setCreatedBooking] = useState<PickupRequest | null>(null);
-  const [isScanningRadar, setIsScanningRadar] = useState(false);
 
   // Calculate totals
   const bookingItems: MaterialBookingItem[] = Object.entries(selectedItems)
     .filter(([_, qty]) => qty > 0)
     .map(([catId, qty]) => {
-      const cat = WASTE_CATEGORIES.find(c => c.id === catId)!;
+      const cat = wasteCategories.find(c => c.id === catId);
+      if (!cat) return null;
       return {
         categoryId: cat.id,
         categoryName: cat.name,
@@ -76,7 +73,7 @@ export const SchedulePickup: React.FC = () => {
         ratePerKg: cat.ratePerKg,
         estimatedValue: Math.round(qty * cat.ratePerKg)
       };
-    });
+    }).filter((item): item is MaterialBookingItem => Boolean(item));
 
   const totalKg = bookingItems.reduce((acc, curr) => acc + curr.estimatedKg, 0);
   const totalValue = bookingItems.reduce((acc, curr) => acc + curr.estimatedValue, 0);
@@ -102,32 +99,32 @@ export const SchedulePickup: React.FC = () => {
     setCurrentStep(2);
   };
 
-  const handleStartRadarScan = () => {
-    setIsScanningRadar(true);
-    setCurrentStep(3);
-    setTimeout(() => {
-      setIsScanningRadar(false);
-      // default to first nearest collector
-      setSelectedCollector(collectors[0]);
-    }, 1200);
-  };
+  const handleStartRadarScan = () => setCurrentStep(3);
 
-  const handleConfirmPickup = (collector: Collector) => {
-    const newPickup = bookPickup(
+  const handleConfirmPickup = async (collector?: Collector) => {
+    try {
+      const newPickup = await bookPickup(
       bookingItems,
       {
         name: formData.name,
         phone: formData.phone,
         address: formData.address,
+        city: formData.city,
+        ward: formData.ward,
+        pincode: formData.pincode,
+        condition: formData.condition,
         notes: formData.notes,
         date: formData.date,
         slot: formData.slot
       },
-      collector.id
+      collector?.id
     );
 
-    setCreatedBooking(newPickup);
-    setCurrentStep(4);
+      setCreatedBooking(newPickup);
+      setCurrentStep(4);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Unable to create the pickup request.');
+    }
   };
 
   return (
@@ -178,7 +175,7 @@ export const SchedulePickup: React.FC = () => {
 
             {/* Grid of Materials */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {WASTE_CATEGORIES.map((cat) => {
+              {wasteCategories.map((cat) => {
                 const qty = selectedItems[cat.id] || 0;
                 const isSelected = qty > 0;
 
@@ -313,6 +310,15 @@ export const SchedulePickup: React.FC = () => {
                 </div>
               </div>
 
+              <div>
+                <label htmlFor="waste-condition" className="mb-1 block text-xs font-semibold text-slate-700">Waste condition</label>
+                <select id="waste-condition" value={formData.condition} onChange={(e) => setFormData({ ...formData, condition: e.target.value as typeof formData.condition })} className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs focus:border-brand-500 focus:outline-hidden">
+                  <option value="clean">Clean and separated</option>
+                  <option value="mixed">Mixed materials</option>
+                  <option value="damaged">Wet or damaged</option>
+                </select>
+              </div>
+
               {/* Address */}
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -328,6 +334,7 @@ export const SchedulePickup: React.FC = () => {
                 </div>
                 <textarea
                   rows={2}
+                  required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:border-brand-500 focus:outline-hidden"
@@ -341,6 +348,7 @@ export const SchedulePickup: React.FC = () => {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">City</label>
                   <input
                     type="text"
+                    required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:border-brand-500 focus:outline-hidden"
@@ -442,22 +450,10 @@ export const SchedulePickup: React.FC = () => {
                 Verified Nearby Collectors
               </h2>
               <p className="text-xs text-slate-500">
-                Matching verified partners equipped with calibrated IoT scales within your ward.
+                Select a verified collector account, or leave the request open for a collector to accept.
               </p>
             </div>
 
-            {/* Radar Scanning Visual */}
-            {isScanningRadar ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm max-w-md mx-auto space-y-4">
-                <div className="w-24 h-24 rounded-full border-4 border-brand-200 border-t-brand-600 animate-spin mx-auto flex items-center justify-center">
-                  <Radio className="w-8 h-8 text-brand-600" />
-                </div>
-                <h4 className="font-bold text-slate-800 text-base">Scanning Ward 31 Radio Network...</h4>
-                <p className="text-xs text-slate-500">
-                  Finding available verified collection partners nearby.
-                </p>
-              </div>
-            ) : (
               <div className="space-y-4 max-w-3xl mx-auto">
                 {/* List of matched collectors */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -527,8 +523,7 @@ export const SchedulePickup: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedCollector(c);
-                              setActiveTab('identity');
+                              viewCollectorProfile(c.id);
                             }}
                             className="py-2 px-3 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                           >
@@ -540,6 +535,7 @@ export const SchedulePickup: React.FC = () => {
                     );
                   })}
                 </div>
+                {collectors.length === 0 && <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-center"><p className="text-sm text-slate-600">No verified collectors are available yet. You can register the pickup request and an eligible collector can accept it later.</p><button type="button" onClick={() => void handleConfirmPickup()} className="mt-4 min-h-11 rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white">Request without assigning a collector</button></div>}
 
                 <div className="text-center pt-2">
                   <button
@@ -551,7 +547,6 @@ export const SchedulePickup: React.FC = () => {
                   </button>
                 </div>
               </div>
-            )}
           </div>
         )}
 
@@ -574,7 +569,7 @@ export const SchedulePickup: React.FC = () => {
                   Pickup Confirmed!
                 </h2>
                 <p className="text-xs text-slate-500 mt-1">
-                  A nearby partner has been routed. Your materials are now registered into the circular trace chain.
+                  {createdBooking.assignedCollectorName ? 'Your pickup is assigned to a collector.' : 'Your request is saved and available for a verified collector to accept.'}
                 </p>
               </div>
 
@@ -590,7 +585,7 @@ export const SchedulePickup: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-between text-xs text-slate-300 pt-2 border-t border-slate-800">
-                  <span>Assigned Collector: <strong>{createdBooking.assignedCollectorName}</strong></span>
+                  <span>Assigned Collector: <strong>{createdBooking.assignedCollectorName || 'Awaiting acceptance'}</strong></span>
                   <span>Doorstep PIN: <strong className="font-mono text-amber-400">{createdBooking.verificationPin}</strong></span>
                 </div>
               </div>

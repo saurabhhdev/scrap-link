@@ -14,18 +14,27 @@ export const BottomNav: React.FC<BottomNavProps> = () => {
       return [
         { id: 'customer', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
         { id: 'schedule', label: 'Pickup', icon: <Truck className="h-4 w-4" /> },
-        { id: 'rates', label: 'Rates', icon: <Coins className="h-4 w-4" /> },
+        { id: 'price-board', label: 'Prices', icon: <Coins className="h-4 w-4" /> },
         { id: 'trace', label: 'Trace', icon: <Search className="h-4 w-4" /> },
         { id: 'landing', label: 'Overview', icon: <Home className="h-4 w-4" /> },
       ];
     }
     if (role === 'collector') {
       return [
-        { id: 'collector', label: 'Queue', icon: <Truck className="h-4 w-4" /> },
-        { id: 'identity', label: 'Green ID', icon: <User className="h-4 w-4" /> },
-        { id: 'rates', label: 'Rates', icon: <Coins className="h-4 w-4" /> },
-        { id: 'trace', label: 'Trace', icon: <Search className="h-4 w-4" /> },
-        { id: 'landing', label: 'Overview', icon: <Home className="h-4 w-4" /> },
+        { id: 'collector', label: 'Dashboard', icon: <Truck className="h-4 w-4" /> },
+        { id: 'create-lot', label: 'Create Lot', icon: <Building2 className="h-4 w-4" /> },
+        { id: 'offers', label: 'Offers', icon: <Search className="h-4 w-4" /> },
+        { id: 'earnings', label: 'Earnings', icon: <Coins className="h-4 w-4" /> },
+        { id: 'identity', label: 'Profile', icon: <User className="h-4 w-4" /> },
+      ];
+    }
+    if (role === 'recycler') {
+      return [
+        { id: 'recycler', label: 'Dashboard', icon: <LayoutDashboard className="h-4 w-4" /> },
+        { id: 'marketplace', label: 'Market', icon: <Building2 className="h-4 w-4" /> },
+        { id: 'marketplace', label: 'Offers', icon: <Search className="h-4 w-4" /> },
+        { id: 'recycler', label: 'Analytics', icon: <Activity className="h-4 w-4" /> },
+        { id: 'price-board', label: 'Prices', icon: <Coins className="h-4 w-4" /> },
       ];
     }
     if (role === 'admin') {

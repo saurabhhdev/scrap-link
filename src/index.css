@@ -1,20 +1,56 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    --kc-forest: #173d35;
+    --kc-forest-soft: #315f4f;
+    --kc-cream: #f7f7f2;
+    --kc-border: #dfe5dc;
+    --kc-text: #25352f;
+  }
+
   html {
     scroll-behavior: smooth;
-    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
-    color: #173d35;
-    background-color: #f7f7f2;
-    letter-spacing: -0.01em;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--kc-text);
+    background-color: var(--kc-cream);
+    font-feature-settings: 'ss01' on;
+    text-rendering: optimizeLegibility;
   }
 
   body {
     @apply antialiased text-slate-800 bg-[#f7f7f2] selection:bg-[#173d35] selection:text-white overflow-x-hidden;
+    min-width: 320px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+    text-wrap: pretty;
+  }
+
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+
+  button, a, input, select, textarea, [tabindex]:not([tabindex='-1']) {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #47755e;
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
@@ -32,7 +68,7 @@
   }
 
   .clean-input {
-    @apply bg-white border border-[#cdd7cb] rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-hidden focus:border-[#5b7c67] focus:ring-1 focus:ring-[#5b7c67] transition-colors;
+    @apply bg-white border border-[#cdd7cb] rounded-lg px-3 py-2 text-xs text-slate-900 focus:outline-none focus:border-[#5b7c67] focus:ring-1 focus:ring-[#5b7c67] transition-colors;
   }
 
   .clean-badge {
@@ -46,6 +82,71 @@
   .perspective-1000 {
     perspective: 1000px;
   }
+}
+
+@keyframes live-copy-glow {
+  0%, 100% {
+    color: #365a4e;
+    text-shadow: 0 0 4px rgba(78, 138, 86, 0.45), 0 0 11px rgba(78, 138, 86, 0.32);
+  }
+  50% {
+    color: #244f39;
+    text-shadow: 0 0 6px rgba(78, 138, 86, 0.85), 0 0 16px rgba(78, 138, 86, 0.62), 0 0 25px rgba(78, 138, 86, 0.36);
+  }
+}
+
+.live-glow-copy {
+  animation: live-copy-glow 1.35s ease-in-out infinite;
+}
+
+.scraplink-brand {
+  perspective: 500px;
+}
+
+.scraplink-mark {
+  transform-origin: center;
+  filter: drop-shadow(0 0 5px rgba(82, 145, 102, 0.38));
+  animation: scraplink-mark-float 4.8s ease-in-out infinite;
+}
+
+.scraplink-wordmark {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  animation: scraplink-wordmark-glow 3.6s ease-in-out infinite;
+}
+
+.scraplink-brand-dark .scraplink-mark {
+  filter: drop-shadow(0 0 7px rgba(200, 217, 184, 0.42));
+}
+
+.navbar-link-glow {
+  position: relative;
+  isolation: isolate;
+  transform-style: preserve-3d;
+  border: 1px solid rgba(98, 160, 106, 0.52);
+  background: linear-gradient(145deg, #ffffff 5%, #e7f5e5 55%, #d3ead0 100%);
+  color: #12452e;
+  text-shadow: 0 0 5px rgba(119, 255, 134, 0.32);
+  box-shadow: 0 2px 8px rgba(69, 150, 82, 0.2), 0 0 5px rgba(92, 210, 112, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.navbar-link-glow:hover {
+  transform: perspective(600px) translateY(-2px) rotateX(5deg) scale(1.025);
+  box-shadow: 0 4px 10px rgba(45, 120, 60, 0.24), 0 0 9px rgba(69, 190, 94, 0.34), 0 4px 0 #b6d6b2, inset 0 1px 0 #fff;
+}
+
+.navbar-link-glow[data-active='true'] {
+  background: linear-gradient(145deg, #e5ffe2 5%, #c5efbf 55%, #ade5a8 100%);
+  box-shadow: 0 3px 10px rgba(45, 120, 60, 0.26), 0 0 9px rgba(69, 190, 94, 0.3), inset 0 0 7px rgba(255, 255, 255, 0.8), 0 3px 0 #a6c9a2;
+}
+
+@keyframes scraplink-mark-float {
+  0%, 100% { transform: translateY(0) rotateY(-8deg) rotateX(2deg); }
+  50% { transform: translateY(-2px) rotateY(8deg) rotateX(-2deg); }
+}
+
+@keyframes scraplink-wordmark-glow {
+  0%, 100% { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 4px rgba(82, 145, 102, 0.12); }
+  50% { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 9px rgba(82, 145, 102, 0.38); }
 }
 
 /* Minimalist scrollbar */

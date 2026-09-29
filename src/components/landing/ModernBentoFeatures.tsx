@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   ShieldCheck, 
@@ -8,7 +8,6 @@ import {
   Award, 
   ArrowRight,
   Lock,
-  Sparkles
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { TiltCard3D } from '../ui/TiltCard3D';
@@ -16,15 +15,6 @@ import { IconPlate } from '../ui/IconPlate';
 
 export const ModernBentoFeatures: React.FC = () => {
   const { setActiveTab, impactStats } = useApp();
-  const [liveHash, setLiveHash] = useState('0x8f2b3e41a998c772e0d49f61b0c8d76211e4a307');
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const hex = Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16)).join('');
-      setLiveHash(`0x${hex}a998c772e0d49f61...${hex.slice(0, 4)}`);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
 
   return (
     <section className="py-20 bg-white border-b border-slate-200/80">
@@ -61,16 +51,16 @@ export const ModernBentoFeatures: React.FC = () => {
                     />
                     <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 text-emerald-300 border border-slate-700 flex items-center space-x-1.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>SHA-256 Immutable Proof</span>
+                      <span>SHA-256 Record Digest</span>
                     </span>
                   </div>
 
                   <div>
                     <h3 className="text-xl font-bold text-white">
-                      Cryptographic Chain-of-Custody Ledger
+                      Pickup Record Integrity
                     </h3>
                     <p className="text-xs text-slate-400 mt-1 leading-relaxed">
-                      Every pickup logs an immutable hash digest tying citizen origin, collector GPS tag, sorting weight, and recycling certificate together.
+                      Pickup status and collection details are saved in the database with a SHA-256 integrity digest. GPS and external certificates are not assumed.
                     </p>
                   </div>
 
@@ -78,15 +68,15 @@ export const ModernBentoFeatures: React.FC = () => {
                   <div className="bg-slate-950 rounded-2xl p-4 border border-slate-800 font-mono text-xs space-y-2 text-slate-300">
                     <div className="flex justify-between items-center text-[10px] text-slate-500 border-b border-slate-800 pb-2">
                       <span>LAST LEDGER COMMIT</span>
-                      <span className="text-emerald-400 font-semibold">STATE: VERIFIED</span>
+                      <span className="text-amber-300 font-semibold">STATE: RECORD-BASED</span>
                     </div>
                     <div className="flex items-center space-x-2 text-emerald-300 font-semibold truncate pt-0.5">
                       <Cpu className="w-4 h-4 shrink-0 text-emerald-400" />
-                      <span className="truncate">{liveHash}</span>
+                      <span className="truncate">{impactStats.totalPickupsCompleted ? `${impactStats.totalPickupsCompleted} collection records` : 'No collection records yet'}</span>
                     </div>
                     <div className="flex justify-between text-[10px] text-slate-400 pt-1">
-                      <span>Standard: CPCB Parivesh EPR Schema</span>
-                      <span>Gas: Zero-Fee Civic Layer</span>
+                      <span>Stored records: MongoDB</span>
+                      <span>Proof: SHA-256 digest</span>
                     </div>
                   </div>
                 </div>
@@ -117,7 +107,7 @@ export const ModernBentoFeatures: React.FC = () => {
                       size="lg" 
                     />
                     <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200">
-                      Approval: IND/09/21/334
+                      Collector-entered weight
                     </span>
                   </div>
 
@@ -126,17 +116,17 @@ export const ModernBentoFeatures: React.FC = () => {
                       Legal Metrology Scale Verification
                     </h3>
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      Eliminates arbitrary weigh-in cuts. Calibrated Class-III digital scales transmit exact weight with automated tare compensation.
+                      Collectors enter the measured weight during collection. Hardware scale integration can be added when supported equipment is configured.
                     </p>
                   </div>
 
                   <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-center space-y-0.5">
                     <span className="text-[10px] uppercase font-mono text-slate-500">Doorstep Scale Precision</span>
                     <div className="text-3xl font-extrabold text-slate-900 font-mono">
-                      28.65 <span className="text-sm font-sans text-slate-500 font-normal">kg</span>
+                      No measurements <span className="text-sm font-sans text-slate-500 font-normal">recorded</span>
                     </div>
                     <span className="text-[11px] text-slate-500 block">
-                      Tolerance: ±0.05% • Automatic Tare Compensated
+                      Weights are saved from collector submissions.
                     </span>
                   </div>
                 </div>
@@ -166,21 +156,21 @@ export const ModernBentoFeatures: React.FC = () => {
                     size="lg" 
                   />
                   <h3 className="text-base font-bold text-slate-900">
-                    100% Direct Citizen Payout
+                    Payment status tracking
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Zero middleman commissions. Payments disburse immediately via NPCI UPI / Jan-Dhan directly to generator and collector.
+                    Collection payouts are recorded in the transaction ledger. Payment provider integration is not configured.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-1 font-mono">
                   <div className="flex justify-between text-slate-500">
-                    <span>Platform Commission:</span>
-                    <span className="text-emerald-700 font-bold">0% (Direct)</span>
+                    <span>Payment provider:</span>
+                    <span className="text-emerald-700 font-bold">Not connected</span>
                   </div>
                   <div className="flex justify-between text-slate-500">
-                    <span>Settlement Speed:</span>
-                    <span className="text-slate-800 font-bold">Instant (T+0)</span>
+                    <span>Ledger status:</span>
+                    <span className="text-slate-800 font-bold">Live records</span>
                   </div>
                 </div>
               </div>
@@ -198,21 +188,21 @@ export const ModernBentoFeatures: React.FC = () => {
                     size="lg" 
                   />
                   <h3 className="text-base font-bold text-slate-900">
-                    CPCB EPR Compliance Vault
+                    Processing references
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Authorized recyclers issue verified Extended Producer Responsibility credits conforming to Plastic Waste Management Rules 2022.
+                    Recyclers can record an external processing reference. The platform does not verify external certificates.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-1 font-mono">
                   <div className="flex justify-between text-slate-500">
-                    <span>EPR Output Audited:</span>
+                    <span>Material collected:</span>
                     <span className="text-indigo-700 font-bold">{impactStats.totalWasteRecoveredKg.toLocaleString('en-IN')} kg</span>
                   </div>
                   <div className="flex justify-between text-slate-500">
-                    <span>Audit Status:</span>
-                    <span className="text-emerald-700 font-bold">CPCB Verified</span>
+                    <span>External certificate verification:</span>
+                    <span className="text-amber-700 font-bold">Not connected</span>
                   </div>
                 </div>
               </div>
@@ -230,21 +220,21 @@ export const ModernBentoFeatures: React.FC = () => {
                     size="lg" 
                   />
                   <h3 className="text-base font-bold text-slate-900">
-                    Social Security & Healthcare
+                    Collector credentials
                   </h3>
                   <p className="text-xs text-slate-600 leading-relaxed">
-                    Formal onboarding links collectors with Ministry of Labour’s e-Shram UAN and Ayushman Bharat PM-JAY health insurance.
+                    Collectors can save optional identity and credential details to their account profile.
                   </p>
                 </div>
 
                 <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 text-xs space-y-1 font-mono">
                   <div className="flex justify-between text-slate-500">
-                    <span>PM-JAY Coverage:</span>
-                    <span className="text-emerald-700 font-bold">₹5 Lakh/family</span>
+                    <span>Credential status:</span>
+                    <span className="text-emerald-700 font-bold">Account record</span>
                   </div>
                   <div className="flex justify-between text-slate-500">
-                    <span>Accreditation:</span>
-                    <span className="text-slate-800 font-bold">SBM-Urban 2.0</span>
+                    <span>Government integration:</span>
+                    <span className="text-slate-800 font-bold">Not connected</span>
                   </div>
                 </div>
               </div>
