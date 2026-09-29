@@ -61,6 +61,7 @@ interface AppContextType {
   role: UserRole;
   currentUser: AuthUser | null;
   login: (credential: string, password: string, expectedRole?: UserRole) => Promise<void>;
+  register: (details: { name: string; phone: string; password: string; role: Exclude<UserRole, 'admin'>; facilityName?: string; city?: string }) => Promise<void>;
   logout: () => void;
   activeTab: AppTab;
   setActiveTab: (tab: AppTab) => void;
@@ -236,6 +237,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } else if (user.role === 'admin') {
       setActiveTabState('admin');
     }
+  };
+
+  const register = async (details: { name: string; phone: string; password: string; role: Exclude<UserRole, 'admin'>; facilityName?: string; city?: string }) => {
+    const { user, token } = await api<{ user: AuthUser; token: string }>('/auth/register', {
+      method: 'POST', body: JSON.stringify(details)
+    });
+    setToken(token);
+    setCurrentUser(user);
+    setRoleState(user.role);
+    setActiveTabState(user.role === 'household' ? 'customer' : user.role);
   };
 
   const logout = () => {
@@ -428,6 +439,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         role,
         currentUser,
         login,
+        register,
         logout,
         activeTab,
         setActiveTab,
